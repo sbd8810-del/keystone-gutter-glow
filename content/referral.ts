@@ -10,7 +10,7 @@
 
 export const referralPaths = {
   /** Where customers refer someone */
-  refer: "/refer",
+  refer: "/referrals",
   /** The page Jimmy sends referred friends: booking with $30 off */
   friend: "/referred",
 } as const;
