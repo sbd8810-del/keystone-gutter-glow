@@ -38,8 +38,8 @@ export default function NotifyTestPage() {
       ) : (
         <p className={styles.off} role="status">
           Notifications are <strong>off</strong> on this deployment, so nothing can be sent from here. They turn on with{" "}
-          <code>FORMSUBMIT_ENABLED=true</code> on Vercel&rsquo;s Production environment, followed by a redeploy. They never run on previews or
-          the demo store.
+          <code>FORMSUBMIT_ENABLED=true</code> in the live site&rsquo;s settings (on Vercel, the Production environment), followed by a
+          redeploy. They never run on previews or the demo store.
         </p>
       )}
     </main>

@@ -2,7 +2,8 @@ import { today } from "@/lib/booking/service";
 import { getBookingStore } from "@/lib/booking/store";
 
 // GET /api/keepalive
-// Vercel runs this once a day (vercel.json, "crons"). Supabase's free plan pauses a database after
+// Called once a day: by Vercel on Vercel (vercel.json, "crons"), or by GitHub on any other host
+// (.github/workflows/keepalive.yml, once SITE_URL is set there). Supabase's free plan pauses a database after
 // a week with no activity, and a paused database means nobody can book until someone restores it
 // by hand. One small read a day counts as activity, so the database never sits idle that long.
 // It reads one day's taken slots and returns nothing about them.
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store" };
 
 export async function GET(request: Request) {
-  // If CRON_SECRET is set in Vercel, only Vercel's scheduler (which sends it) can run this.
+  // If CRON_SECRET is set on the host, only a caller that sends it can run this: Vercel's scheduler
+  // sends it automatically, and the GitHub workflow sends the CRON_SECRET stored in GitHub.
   const secret = process.env.CRON_SECRET;
   if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
     return Response.json({ ok: false }, { status: 401, headers: noStore });

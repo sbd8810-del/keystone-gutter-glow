@@ -1,4 +1,5 @@
 import { resolveStorage, StorageUnavailableError } from "@/lib/storage";
+import { supabaseHeaders } from "@/lib/supabase";
 import type { DeliveryMethodId, ExtraId, ProductId } from "@/content/firewood";
 import type { PriceLine } from "./pricing";
 import type { FirewoodOrder, NewOrder, OrderPatch, OrderStatus, OrderStore } from "./types";
@@ -136,9 +137,7 @@ export class SupabaseOrderStore implements OrderStore {
     const res = await fetch(`${this.url}/rest/v1/firewood_orders${path}`, {
       ...rest,
       headers: {
-        apikey: this.serviceKey,
-        Authorization: `Bearer ${this.serviceKey}`,
-        "Content-Type": "application/json",
+        ...supabaseHeaders(this.serviceKey),
         ...(prefer ? { Prefer: prefer } : {}),
       },
       cache: "no-store",

@@ -18,9 +18,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
-  // Once SITE_URL names the custom domain, the production *.vercel.app addresses send people and
-  // search engines there permanently. API routes are left alone so webhooks configured with the old
-  // address keep working. Previews (VERCEL_ENV=preview) are never redirected.
+  // Vercel only. Once SITE_URL names the custom domain, the production *.vercel.app addresses send
+  // people and search engines there permanently. API routes are left alone so webhooks configured
+  // with the old address keep working. Previews (VERCEL_ENV=preview) are never redirected. Other
+  // hosts have no .vercel.app address; their own address is handled in the host's settings (README).
   async redirects() {
     const site = process.env.SITE_URL?.replace(/\/$/, "");
     if (!site || process.env.VERCEL_ENV !== "production") return [];

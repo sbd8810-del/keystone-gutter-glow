@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // robots.txt, the sitemap and the JSON-LD all read the deployment's environment when they load,
 // so each test sets the environment and then imports a fresh copy.
 
-const ENV_KEYS = ["SITE_URL", "VERCEL_PROJECT_PRODUCTION_URL", "ALLOW_INDEXING", "FIREWOOD_PREVIEW", "SITE_MODE", "VERCEL_ENV"];
+const ENV_KEYS = ["SITE_URL", "VERCEL_PROJECT_PRODUCTION_URL", "ALLOW_INDEXING", "FIREWOOD_PREVIEW", "SITE_MODE", "VERCEL_ENV", "SITE_ENV"];
 const saved = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 async function load(env: Record<string, string | undefined>, firewood: "on" | "off" = "on") {

@@ -8,6 +8,7 @@ import { formatLong } from "@/lib/booking/dates";
 import type { BookingRecord } from "@/lib/booking/types";
 import { formatPhone } from "@/lib/booking/validate";
 import { isDemoStorage } from "@/lib/storage";
+import { deployEnv } from "@/lib/deploy";
 import { publicUrl } from "@/lib/env";
 import { checkLink } from "./check";
 import type { CleanReferralRequest } from "@/lib/referral/validate";
@@ -16,8 +17,9 @@ import { FORMSUBMIT_AJAX, type Notice } from "./notice";
 // Writes the FormSubmit notices for Jimmy. Server only: the API routes hand the result to the
 // browser, which sends it (lib/notify/notice.ts). No API key, account or domain setup is involved.
 //
-//   FORMSUBMIT_ENABLED=true   turns notices on. OFF by default, and never on for Vercel previews
-//                             or the demo store, whose bookings aren't real.
+//   FORMSUBMIT_ENABLED=true   turns notices on. OFF by default, and never on for preview copies
+//                             (Vercel previews, or SITE_ENV=preview on another host) or the demo
+//                             store, whose bookings aren't real.
 //
 // Until Jimmy clicks "Activate Form" in FormSubmit's first email, every submission sends him
 // another activation email instead of the notice. So only switch this on once he expects that
@@ -29,7 +31,7 @@ type Env = Record<string, string | undefined>;
 
 export function formSubmitEnabled(env: Env = process.env): boolean {
   if (env.FORMSUBMIT_ENABLED !== "true") return false;
-  if (env.VERCEL_ENV === "preview") return false;
+  if (deployEnv(env) === "preview") return false;
   return !isDemoStorage(env);
 }
 

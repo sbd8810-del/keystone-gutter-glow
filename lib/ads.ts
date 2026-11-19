@@ -6,7 +6,10 @@
 //   sends people after a successful booking (components/booking/BookingConfirmed.tsx).
 //
 // Only the real production site loads the tag, so preview deployments, local runs and tests never
-// count as visits or conversions in Jimmy's Google Ads account.
+// count as visits or conversions in Jimmy's Google Ads account. "Production" comes from lib/deploy.ts:
+// automatic on Vercel, SITE_ENV=production on any other host.
+
+import { deployEnv } from "./deploy";
 
 export const GOOGLE_TAG_ID = "GTM-MVK64PHQ";
 
@@ -19,9 +22,9 @@ export const BOOKING_CONVERSION = {
 
 type Env = Record<string, string | undefined>;
 
-/** Server only. True on Vercel's production deployment. */
+/** Server only. True on the live site: Vercel's production deployment, or SITE_ENV=production on any other host. */
 export function googleTagOn(env: Env = process.env): boolean {
-  return env.VERCEL_ENV === "production";
+  return deployEnv(env) === "production";
 }
 
 /** The tag's own setup script, exactly as Google gives it. */

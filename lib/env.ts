@@ -6,9 +6,10 @@ import { site } from "@/content/site";
 // Open Graph and Twitter cards, and the JSON-LD all build their links from `publicUrl`.
 //
 // SITE_URL        The canonical address, e.g. https://www.example.com. Set it once the custom
-//                 domain is attached in Vercel. With it set, the old *.vercel.app production
-//                 address also redirects to it (next.config.ts). Unset, Vercel's production
-//                 domain is used, so previews never claim to be the canonical site.
+//                 domain is attached. On Vercel, the old *.vercel.app production address then
+//                 also redirects to it (next.config.ts). Unset, Vercel's production domain is
+//                 used, so previews never claim to be the canonical site. On any other host, set
+//                 it to wherever the site lives: unset there, links use keystonegutterglow.com.
 // ALLOW_INDEXING  "true" lets search engines index the site (robots.txt, meta robots and the
 //                 X-Robots-Tag header all follow it). Unset means noindex everywhere.
 // GOOGLE_SITE_VERIFICATION

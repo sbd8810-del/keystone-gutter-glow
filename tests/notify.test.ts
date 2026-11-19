@@ -41,6 +41,7 @@ beforeEach(() => {
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
   vi.stubEnv("FORMSUBMIT_ENABLED", "true");
   vi.stubEnv("VERCEL_ENV", "");
+  vi.stubEnv("SITE_ENV", "");
   const shim = postgrestShim(db);
   vi.stubGlobal("fetch", (async (input: string | URL | Request, init?: RequestInit) => {
     fetched.push(String(input));
@@ -222,6 +223,9 @@ describe("when notices are allowed", () => {
     expect(formSubmitEnabled(real)).toBe(true);
     expect(formSubmitEnabled({ ...real, VERCEL_ENV: "production" })).toBe(true);
     expect(formSubmitEnabled({ ...real, VERCEL_ENV: "preview" })).toBe(false);
+    // Off Vercel: the live site emails, a test copy marked SITE_ENV=preview never does
+    expect(formSubmitEnabled({ ...real, SITE_ENV: "production" })).toBe(true);
+    expect(formSubmitEnabled({ ...real, SITE_ENV: "preview" })).toBe(false);
     expect(formSubmitEnabled({ FORMSUBMIT_ENABLED: "true", NODE_ENV: "development" })).toBe(false);
     expect(formSubmitEnabled({ FORMSUBMIT_ENABLED: "true", NODE_ENV: "production", BOOKING_DEMO_MODE: "true" })).toBe(false);
     expect(formSubmitEnabled({ ...real, FORMSUBMIT_ENABLED: undefined })).toBe(false);

@@ -8,9 +8,11 @@
 //   SITE_MODE=firewood  "/" is the firewood site and the gutter site moves to /gutters.
 //   FIREWOOD_PREVIEW=true  shows /firewood and the mode switch without changing "/".
 //
-// Next dev and Vercel preview deployments show /firewood automatically, so it can be reviewed.
-// A Vercel production deployment never does unless one of the variables above says so.
-// Static pages read these at build time, so redeploy after changing one.
+// Next dev and preview copies (Vercel previews, or SITE_ENV=preview elsewhere) show /firewood
+// automatically, so it can be reviewed. The live site never does unless one of the variables above
+// says so. Static pages read these at build time, so redeploy after changing one.
+
+import { deployEnv } from "@/lib/deploy";
 
 export type SiteMode = "gutter" | "firewood";
 
@@ -37,7 +39,8 @@ export function getSiteMode(env: Env = process.env): SiteMode {
 export function isFirewoodVisible(env: Env = process.env): boolean {
   if (firewoodSwitch.off) return false;
   if (getSiteMode(env) === "firewood" || env.FIREWOOD_PREVIEW === "true") return true;
-  if (env.VERCEL_ENV) return env.VERCEL_ENV === "preview";
+  const kind = deployEnv(env);
+  if (kind !== "development") return kind === "preview";
   return env.NODE_ENV !== "production";
 }
 

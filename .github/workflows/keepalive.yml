@@ -1,0 +1,37 @@
+# Keeps the Supabase database from pausing, wherever the site is hosted.
+#
+# Supabase's free plan pauses a database after a week with no activity, and then nobody can book.
+# On Vercel, vercel.json already calls /api/keepalive every day. On any other host, this does it.
+#
+# It does nothing until you turn it on (README, "Hosting somewhere other than Vercel"). In GitHub:
+# the repository, then Settings, then Secrets and variables, then Actions:
+#   Variables tab:  SITE_URL     the site's address, e.g. https://keystonegutterglow.com
+#   Secrets tab:    CRON_SECRET  the same value as CRON_SECRET on the host (skip it if the host has none)
+#
+# A failed run means the site is down or the database is paused. It shows red in the Actions tab,
+# and GitHub emails about it.
+
+name: Keep the database awake
+
+on:
+  schedule:
+    - cron: "30 13 * * *" # every day at 13:30 UTC
+  workflow_dispatch: # the "Run workflow" button, to test it
+
+permissions: {}
+
+jobs:
+  keepalive:
+    if: ${{ vars.SITE_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/keepalive
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          args=(--fail-with-body --silent --show-error --max-time 60 --retry 3 --retry-delay 30 --retry-all-errors)
+          if [ -n "$CRON_SECRET" ]; then args+=(-H "Authorization: Bearer $CRON_SECRET"); fi
+          curl "${args[@]}" "${SITE_URL%/}/api/keepalive"
+          echo

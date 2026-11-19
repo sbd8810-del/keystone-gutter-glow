@@ -9,8 +9,12 @@ interface Bucket {
 const buckets = new Map<string, Bucket>();
 const MAX_TRACKED = 5000;
 
+// The visitor's address, as the host's proxy saw it. Proxies add the address they saw to the END of
+// X-Forwarded-For, after anything the visitor sent, so the last entry is the one a visitor can't fake.
+// On Vercel the header holds just one address, so first and last are the same.
 export function clientIp(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
+  return forwarded?.at(-1) || request.headers.get("x-real-ip") || "unknown";
 }
 
 export function allowRequest(scope: string, request: Request, limit: number, windowMs = 60_000, now = Date.now()): boolean {

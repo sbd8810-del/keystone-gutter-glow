@@ -1,5 +1,6 @@
 import type { PackageId } from "@/content/pricing";
 import { makeReferralCode, sameReferral } from "@/lib/referral/code";
+import { supabaseHeaders } from "@/lib/supabase";
 import type { BookingRecord, BookingStore, CreateResult, ISODate, NewBooking, NewReferral, ReferralRecord, TakenSlot } from "../types";
 
 /**
@@ -10,7 +11,8 @@ import type { BookingRecord, BookingStore, CreateResult, ISODate, NewBooking, Ne
  *   - a unique idempotency key makes retries return the original booking
  * so double booking is impossible even if two servers race, or someone inserts by hand.
  *
- * Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (server-side only, never NEXT_PUBLIC).
+ * Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (server-side only, never NEXT_PUBLIC). The key can
+ * be the older service_role key or the newer sb_secret_ key: lib/supabase.ts sends either correctly.
  * The tests run this adapter against the real migrations on PGlite, through a small
  * PostgREST stand-in. Its SQL side has been checked on the live project (2026-11-05); its HTTPS calls first run on the launch deploy.
  */
@@ -134,11 +136,7 @@ export class SupabaseBookingStore implements BookingStore {
   ) {}
 
   private headers(): HeadersInit {
-    return {
-      apikey: this.serviceKey,
-      Authorization: `Bearer ${this.serviceKey}`,
-      "Content-Type": "application/json",
-    };
+    return supabaseHeaders(this.serviceKey);
   }
 
   async listTaken(from: ISODate, to: ISODate): Promise<TakenSlot[]> {

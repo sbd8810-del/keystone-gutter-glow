@@ -21,6 +21,13 @@ describe("Google tag", () => {
     expect(googleTagOn({ NODE_ENV: "development" })).toBe(false);
     expect(googleTagOn({})).toBe(false);
   });
+
+  it("loads on another host's live site when SITE_ENV=production, and not on a test copy there", () => {
+    expect(googleTagOn({ SITE_ENV: "production", NODE_ENV: "production" })).toBe(true);
+    expect(googleTagOn({ SITE_ENV: "preview", NODE_ENV: "production" })).toBe(false);
+    // A production build without either setting stays off: local `npm start` never counts
+    expect(googleTagOn({ NODE_ENV: "production" })).toBe(false);
+  });
 });
 
 describe("booking conversion", () => {

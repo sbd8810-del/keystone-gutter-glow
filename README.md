@@ -17,11 +17,12 @@ What the site says to customers (prices, copy, the legal pages) is on the site i
 9. [The database](#the-database)
 10. [Changing prices, plans and other rules](#changing-prices-plans-and-other-rules)
 11. [Google Ads](#google-ads)
-12. [Settings on Vercel (environment variables)](#settings-on-vercel-environment-variables)
-13. [Moving to keystonegutterglow.com and showing up on Google](#moving-to-keystonegutterglowcom-and-showing-up-on-google)
-14. [Firewood (switched off)](#firewood-switched-off)
-15. [Working on the code, with or without Claude](#working-on-the-code-with-or-without-claude)
-16. [Still to confirm](#still-to-confirm)
+12. [Settings (environment variables)](#settings-environment-variables)
+13. [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel)
+14. [Moving to keystonegutterglow.com and showing up on Google](#moving-to-keystonegutterglowcom-and-showing-up-on-google)
+15. [Firewood (switched off)](#firewood-switched-off)
+16. [Working on the code, with or without Claude](#working-on-the-code-with-or-without-claude)
+17. [Still to confirm](#still-to-confirm)
 
 ---
 
@@ -49,6 +50,7 @@ Some of these services require account holders to be 18 or older. If one does, a
      6. Sam deletes his copy, so bookings don't go to two places.
 
      Claude can walk you through it. Ask: "Help me set up this website on my own Vercel and Supabase accounts. The README explains the pieces."
+   - **Or skip Vercel entirely.** The site runs on any host that runs Node.js. See [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel).
 3. **Your domain.** To move the site onto keystonegutterglow.com, and turn on Google search listing once it's there, follow [Moving to keystonegutterglow.com](#moving-to-keystonegutterglowcom-and-showing-up-on-google).
 
 **Approve the legal pages and business statements.** Section 6 of the agreement makes this your call.
@@ -78,7 +80,7 @@ Some of these services require account holders to be 18 or older. If one does, a
 | Piece | What it does | Where you manage it |
 |---|---|---|
 | **This code** (GitHub repo `keystone-gutter-glow`) | The whole website. Built with Next.js (TypeScript). | This folder, and GitHub |
-| **Vercel** | Hosts the site. Every push to the `main` branch goes live in about a minute. Holds the site's settings (environment variables) and runs the daily keep-alive job. | vercel.com, project `keystone-gutter-glow` |
+| **Vercel** | Hosts the site. Every push to the `main` branch goes live in about a minute. Holds the site's settings (environment variables) and runs the daily keep-alive job. Any host that runs Node.js can replace it ([Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel)). | vercel.com, project `keystone-gutter-glow` |
 | **Supabase** | The database: every booking and referral. Postgres, free plan, US East. | In Vercel: Storage, then `keystone-gutter-glow`, then **Open in Supabase**. You sign in through Vercel; there's no separate Supabase password. |
 | **FormSubmit** (formsubmit.co) | Emails you every booking, plan and referral. Free; no account or key. | Nothing to manage. It sends to the address in `content/site.ts`. |
 | **Zoho** | Your mailbox for jimmyesmond@keystonegutterglow.com | zoho.com |
@@ -277,13 +279,13 @@ Every email comes from FormSubmit to jimmyesmond@keystonegutterglow.com. It's se
 1. Check spam.
 2. Check the `bookings` table. Bookings always save, emailed or not.
 3. **Send yourself a test:**
-   1. In Vercel, under Settings then Environment Variables, set `NOTIFY_TEST_ENABLED` to `true` for Production.
+   1. In Vercel, under Settings then Environment Variables, set `NOTIFY_TEST_ENABLED` to `true` for Production. On another host, set it in that host's environment settings.
    2. Redeploy.
    3. Open `/notify-test` and press "Send a test message".
    4. Set the variable back to off and redeploy. The page is a 404 while it's off, so strangers can't use it to fill your inbox.
 4. **After moving to a new domain**, FormSubmit sees a new site and sends one more "Activate Form" email. Click it.
 
-**Switching emails off.** Remove `FORMSUBMIT_ENABLED` in Vercel and redeploy. Bookings keep working; you just aren't told. FormSubmit never runs on preview deployments or the demo store, so test bookings never reach you.
+**Switching emails off.** Remove `FORMSUBMIT_ENABLED` from the host's settings and redeploy. Bookings keep working; you just aren't told. FormSubmit never runs on preview copies (Vercel previews, or `SITE_ENV=preview` on another host) or the demo store, so test bookings never reach you.
 
 ---
 
@@ -320,7 +322,8 @@ Supabase (Postgres). Open it from Vercel: Storage, then `keystone-gutter-glow`, 
 
 ### What protects it
 - **Row-level security** is on for every table. The public key can't read or write anything.
-- **Only the website's server key** (`SUPABASE_SERVICE_ROLE_KEY`, in Vercel) can. Never share it or put it in the website's browser code.
+- **Only the website's server key** (`SUPABASE_SERVICE_ROLE_KEY`, in the host's settings) can. Never share it or put it in the website's browser code.
+- **Two kinds of server key.** The site accepts both: the older `service_role` key (starts `eyJ`) and the newer secret key (starts `sb_secret_`). Supabase says it's phasing out the older kind by the end of 2026. If it stops working, make a secret key in Supabase (Settings, then API Keys), put it in `SUPABASE_SERVICE_ROLE_KEY`, and redeploy. "Check it's real" links in older emails then stop working (see [The emails you get](#the-emails-you-get)); new ones work.
 - **`create_booking()`** is the one database function the site books through. It enforces the daily limit and the one-booking-per-slot rule, and uses up referral codes.
 - **A trigger** re-checks the daily limit even for rows added by hand.
 
@@ -364,7 +367,7 @@ The database won't let a move go over the daily limit: the update is refused wit
 ### Free plan: pausing and backups
 
 **Pausing.** Supabase pauses a free database after a week with no activity. A paused database means nobody can book: the booking form shows "call us".
-- **What stops it:** Vercel runs `/api/keepalive` every day at 13:00 UTC (`vercel.json`). It does one small read, which counts as activity. You can see it in Vercel under Settings, then Cron Jobs.
+- **What stops it:** Vercel runs `/api/keepalive` every day at 13:00 UTC (`vercel.json`). It does one small read, which counts as activity. You can see it in Vercel under Settings, then Cron Jobs. On any other host, a GitHub workflow does the same once you turn it on (see [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel)).
 - **If it pauses anyway:** open the project in Supabase and press **Restore**.
 
 ### Backups
@@ -408,25 +411,26 @@ Everything a customer sees comes from the `content/` folder. Change it there and
 
 ## Google Ads
 
-- **The tag.** Google tag container `GTM-MVK64PHQ` loads on every page of the live site, and only there: never on previews or local runs (`lib/ads.ts`, `app/layout.tsx`). It fires your Google Ads tag (account `18566097431`). That was confirmed working on 2026-11-14.
+- **The tag.** Google tag container `GTM-MVK64PHQ` loads on every page of the live site, and only there: never on previews or local runs (`lib/ads.ts`, `app/layout.tsx`). It fires your Google Ads tag (account `18566097431`). That was confirmed working on 2026-11-14. Vercel tells the site which copy is live on its own. On any other host, the live site needs `SITE_ENV=production`, or the tag and conversions stay off.
 - **Conversions.** Each booking counts once as a **Purchase** conversion (`AW-18566097431/YzNNCIGmpLUdEJfUgJVF`). It's worth $1, with the booking reference as the transaction ID. It fires on `/booking-confirmed`, once per booking, and never when that page is opened without a booking.
 - **Checking it.** In Google Ads, under Goals then Conversions, the first real booking should appear within a few hours. Don't make a test booking on the live site: it writes to the real database and emails you.
 
 ---
 
-## Settings on Vercel (environment variables)
+## Settings (environment variables)
 
-In Vercel: the project, then **Settings**, then **Environment Variables**. After changing one, **redeploy** (Deployments, then the latest one's "⋯" menu, then Redeploy).
+In Vercel: the project, then **Settings**, then **Environment Variables**. After changing one, **redeploy** (Deployments, then the latest one's "⋯" menu, then Redeploy). On any other host, the same names go in that host's environment settings, and it needs a redeploy too.
 
 | Variable | What it does | Live site now |
 |---|---|---|
 | `BOOKING_STORE` | `supabase` = real bookings | `supabase` |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | The database connection (added by Vercel's Supabase integration) | set |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | The database connection (added by Vercel's Supabase integration; on another host, copied from Supabase by hand) | set |
 | `FORMSUBMIT_ENABLED` | `true` = email you every booking, plan and referral | `true` |
 | `NOTIFY_TEST_ENABLED` | `true` = `/notify-test` works. Only while testing. | off |
 | `NOTICE_SECRET` | Optional secret for the Check it's real links | not set (uses the Supabase key) |
-| `CRON_SECRET` | Optional. Only Vercel's scheduler can run the keep-alive. | not set |
-| `SITE_URL` | The site's real address, once the domain moves | not set |
+| `CRON_SECRET` | Optional. Only callers that send it can run the keep-alive: Vercel's scheduler, or the GitHub workflow off Vercel. | not set |
+| `SITE_URL` | The site's real address, once the domain moves. Required on any host other than Vercel. | not set |
+| `SITE_ENV` | Other hosts only: `production` on the live site (turns on the Google tag), `preview` on a test copy. Vercel works this out on its own. | not needed on Vercel |
 | `ALLOW_INDEXING` | `true` = Google may list the site | **not set: the site is hidden from Google** |
 | `GOOGLE_SITE_VERIFICATION` | Search Console's HTML-tag token | not set |
 | `FIREWOOD_PREVIEW`, `SITE_MODE`, `STRIPE_*`, `RESEND_API_KEY` | Firewood only (switched off) | |
@@ -436,11 +440,61 @@ All of them are explained in `.env.example`.
 
 ---
 
+## Hosting somewhere other than Vercel
+
+Nothing in the site needs Vercel. It runs on any host that runs a Node.js server, such as Render, Railway, Netlify, Fly.io or a server of your own. A host that only serves plain files (GitHub Pages, basic web hosting) won't work, because booking runs on the server.
+
+Claude can do the move with you. Ask: "Help me move this website from Vercel to (the host). Follow the README section 'Hosting somewhere other than Vercel'."
+
+**1. The database.** The Supabase database was made through Vercel, so it's managed through a Vercel account. To leave Vercel completely, give the site its own Supabase project:
+1. Make a free account and project at supabase.com. US East is closest.
+2. In the old project's Table Editor, export `bookings` and `referrals` to CSV.
+3. In the new project's SQL Editor, run the four files in `db/migrations`, in order.
+4. In the new project's Table Editor, import `bookings` first, then `referrals`, because each used referral points at a booking.
+5. Copy the project URL (the **Connect** button shows it) and a **secret key** (Settings, then API Keys; it starts `sb_secret_`). Never use the publishable key.
+
+**2. The host.**
+- Connect it to your GitHub repository, so each push to `main` goes live.
+- Node.js 20.9 or newer. `package.json` asks for it, and most hosts pick it up from there.
+- Build command `npm ci && npm run build`. Start command `npm start`. It listens on the port the host gives it (`PORT`), or 3000.
+
+**3. The settings.** Put these in the host's environment settings **before the first build**, because some are read while building:
+
+| Variable | Value |
+|---|---|
+| `SITE_ENV` | `production`. Vercel says this on its own; other hosts need it, or the Google tag and booking conversions stay off. |
+| `SITE_URL` | Where the site lives, e.g. `https://keystonegutterglow.com`. Without it, the links in your emails point at keystonegutterglow.com. |
+| `BOOKING_STORE` | `supabase` |
+| `SUPABASE_URL` | The project URL from step 1 |
+| `SUPABASE_SERVICE_ROLE_KEY` | The secret key from step 1. The name says "service role", but the site accepts either kind of key. |
+| `FORMSUBMIT_ENABLED` | `true` |
+| `CRON_SECRET` | A long random password, for the keep-alive below |
+| `ALLOW_INDEXING` | `true`, once the site is on keystonegutterglow.com |
+
+Then deploy, open the site, and check that the booking calendar shows open days. If FormSubmit sends an "Activate Form" email, click it.
+
+**4. The daily keep-alive.** Vercel ran it from `vercel.json`. Other hosts ignore that file, so GitHub runs it instead, for free (`.github/workflows/keepalive.yml`, every day at 13:30 UTC). It does nothing until you turn it on:
+1. On GitHub, open the repository, then Settings, then Secrets and variables, then Actions.
+2. Under **Variables**, add `SITE_URL` with the site's address.
+3. Under **Secrets**, add `CRON_SECRET` with the same value as on the host.
+4. In the **Actions** tab, open "Keep the database awake" and press **Run workflow**. A green check means the database answered. A red X means the site is down or the database is paused.
+
+GitHub emails about failed scheduled runs to whoever created the workflow (Sam), unless someone disables and re-enables it. So in the Actions tab, open the workflow and use its "⋯" menu to **Disable** it, then **Enable** it. From then on the emails come to you.
+
+**5. Afterwards.**
+- **Move the domain** to the new host (its settings show the DNS records), then **delete the Vercel project**, so bookings don't go to two places. Before deleting it, check the old database for bookings or referrals made since your export, and add them to the new one.
+- **Privacy policy.** It names Vercel as the host. Change that line in `content/legal.tsx` ("Who we share it with") to the new host, and update `LEGAL_UPDATED`.
+- **The host's own address** (like `yoursite.onrender.com`) keeps working next to your domain. Every page tells Google that `SITE_URL` is the real address, so that's fine. If the host can redirect its own address to your domain, turn that on.
+- **"Check it's real" links** in emails from before the move stop working, because the new database has a different key. Links in new emails work.
+- **A test copy** on another host needs `SITE_ENV=preview` and `BOOKING_DEMO_MODE=true`, with no Supabase settings. It then uses fake bookings, never emails you, and never counts in Google Ads.
+
+---
+
 ## Moving to keystonegutterglow.com and showing up on Google
 
 Right now every page tells Google not to list it (`noindex`), and keystonegutterglow.com still shows the old GitHub Pages site. To switch over:
 
-1. **Point the domain at Vercel.** In Vercel, open Settings, then Domains. Add `keystonegutterglow.com`, then add the DNS records Vercel shows at the domain registrar. Remove the old GitHub Pages records. Keep the Zoho email records.
+1. **Point the domain at Vercel.** In Vercel, open Settings, then Domains. Add `keystonegutterglow.com`, then add the DNS records Vercel shows at the domain registrar. Remove the old GitHub Pages records. Keep the Zoho email records. (On another host, add the domain in that host's settings and use the records it shows.)
 2. **Set `SITE_URL`.** Once Vercel says the domain is valid, set `SITE_URL=https://keystonegutterglow.com` on Production. From then on the `.vercel.app` address redirects to the domain. Email links (Check it's real, referral links) use the new address too; old links keep working through the redirect.
 3. **Let Google list the site.** Set `ALLOW_INDEXING=true` on Production, then redeploy.
 4. **Reactivate FormSubmit.** It sends one more "Activate Form" email for the new address. Click it.
@@ -477,7 +531,9 @@ npm run build
 
 The local copy never touches the real database or your inbox. It uses an in-memory demo store, and emails are off.
 
-**Putting a change live:** commit, then push to `main`. Vercel builds it and it's live in about a minute. If the build fails, the old version stays up.
+**Putting a change live:** commit, then push to `main`. Vercel builds it and it's live in about a minute. If the build fails, the old version stays up. Other hosts connected to GitHub work the same way.
+
+**Running the real build yourself** (any computer or server): `npm ci`, `npm run build`, then `npm start`, with the settings from [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel).
 
 **Where things are**
 
@@ -490,6 +546,7 @@ lib/notify/   the emails to you (formsubmit.ts) and the Check it's real links (c
 lib/plan/     adding a plan to an existing booking
 lib/referral/ referral codes and the referral form's checks
 db/migrations SQL for the database's structure
+.github/      the daily keep-alive workflow for hosts other than Vercel
 tests/        the automated checks
 DESIGN.md     why the site looks the way it does
 ```
@@ -502,7 +559,8 @@ DESIGN.md     why the site looks the way it does
 - **No new fees, refunds, taxes or promises.** Never invent them on Jimmy's behalf: ask him.
 - **Plan terms.** When they change, bump `planRules.termsVersion`.
 - **Privacy.** Don't put Jimmy's home address anywhere.
-- **Finishing.** Commit and push to `main` only when Jimmy says to. Afterwards, check https://keystone-gutter-glow.vercel.app.
+- **No host lock-in.** Don't tie code to Vercel. Use `deployEnv()` (`lib/deploy.ts`) to tell the live site from a test copy, never `VERCEL_ENV` directly.
+- **Finishing.** Commit and push to `main` only when Jimmy says to. Afterwards, check the live site (https://keystone-gutter-glow.vercel.app until the domain moves).
 
 ---
 

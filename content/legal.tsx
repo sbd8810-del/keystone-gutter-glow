@@ -505,6 +505,7 @@ export const privacy: LegalDoc = {
         <>
           <p>Only the services that help us run the business, for that purpose:</p>
           <ul>
+            {/* If the site moves to another host, name that host here and update LEGAL_UPDATED. */}
             <li>
               <strong>Vercel</strong> hosts this website.
             </li>
