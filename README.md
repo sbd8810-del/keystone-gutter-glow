@@ -231,7 +231,7 @@ Don't charge anyone a cancellation fee, whatever version they agreed to. Wheneve
 - The thank-you is paid **only after the friend has booked and their house is fully cleaned**. A referral that never becomes a booking is worth nothing.
 
 **How it flows**
-1. **The customer fills in `/refer`.** They give their name and phone, their thank-you choice, and the friend's name and phone or email. They tick a box saying the friend is happy to hear from you.
+1. **The customer fills in `/referrals`.** (The old `/refer` address still takes people there.) They give their name and phone, their thank-you choice, and the friend's name and phone or email. They tick a box saying the friend is happy to hear from you.
 2. **The server saves it** in the `referrals` table with a **personal 8-character code**, like `K7PQ2M9X`. If the same person sends the same friend again before that code is used, it reuses the same row and code instead of making a second one.
 3. **You get a "New referral" email.** It has the friend's details, their personal link (`…/referred/K7PQ2M9X`), what you'll owe and when, and a **Check it's real** link. The person who referred never sees the code.
 4. **You send the friend their link.**
@@ -265,7 +265,7 @@ Every email comes from FormSubmit to jimmyesmond@keystonegutterglow.com. It's se
 | New booking KGG-XXXXX: date | Someone booked | Reference, day, address, house, price (and plan or referral details), name, phone, email, notes, **Check it's real** link |
 | Recurring plan added to booking KGG-XXXXX | "Make it recurring" after booking | The plan, the booking's old and new price, the year's total, the Check link |
 | Recurring plan request | The rare case the booking couldn't be updated | The plan and the customer's details. Change the booking by hand. |
-| New referral: friend, from referrer | Someone used `/refer` | Both people's details, the friend's personal link and code, the thank-you owed, the Check link |
+| New referral: friend, from referrer | Someone used `/referrals` | Both people's details, the friend's personal link and code, the thank-you owed, the Check link |
 
 **Reply** goes straight to the customer. A referral without an email address has no Reply address.
 

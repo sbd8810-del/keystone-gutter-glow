@@ -43,22 +43,22 @@ describe("robots.txt", () => {
 describe("sitemap", () => {
   it("uses the configured address and lists firewood when it's public", async () => {
     const { sitemap } = await load({ SITE_URL: "https://example.test/", FIREWOOD_PREVIEW: "true" });
-    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/firewood", "https://example.test/refer"]);
+    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/firewood", "https://example.test/referrals"]);
   });
 
   it("falls back to Vercel's production domain, and leaves firewood out when it's hidden", async () => {
     const { sitemap } = await load({ VERCEL_PROJECT_PRODUCTION_URL: "keystone-gutter-glow.vercel.app", VERCEL_ENV: "production" });
-    expect(sitemap().map((p) => p.url)).toEqual(["https://keystone-gutter-glow.vercel.app/", "https://keystone-gutter-glow.vercel.app/refer"]);
+    expect(sitemap().map((p) => p.url)).toEqual(["https://keystone-gutter-glow.vercel.app/", "https://keystone-gutter-glow.vercel.app/referrals"]);
   });
 
   it("lists /gutters instead in firewood mode", async () => {
     const { sitemap } = await load({ SITE_URL: "https://example.test", SITE_MODE: "firewood" });
-    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/gutters", "https://example.test/refer"]);
+    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/gutters", "https://example.test/referrals"]);
   });
 
   it("lists only the gutter site while firewood is switched off, whatever the environment says", async () => {
     const { sitemap } = await load({ SITE_URL: "https://example.test", SITE_MODE: "firewood", FIREWOOD_PREVIEW: "true" }, "off");
-    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/refer"]);
+    expect(sitemap().map((p) => p.url)).toEqual(["https://example.test/", "https://example.test/referrals"]);
   });
 });
 

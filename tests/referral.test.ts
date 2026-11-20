@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as bookingPost } from "@/app/api/bookings/route";
 import { POST as referralPost } from "@/app/api/referrals/route";
@@ -28,7 +29,13 @@ const pkg = (id: string) => getPackage(id)!;
 describe("the program's rules", () => {
   it("are Sam's: $25 cash or $50 off a plan, and $30 off for the friend", () => {
     expect(referralRules).toEqual({ friendDiscount: 30, cashReward: 25, planCredit: 50 });
-    expect(referralPaths).toEqual({ refer: "/refer", friend: "/referred" });
+    expect(referralPaths).toEqual({ refer: "/referrals", friend: "/referred" });
+  });
+
+  it("has its page where every link points, and the old /refer address still gets there", async () => {
+    for (const path of Object.values(referralPaths)) expect(existsSync(`app${path}/page.tsx`)).toBe(true);
+    const { default: config } = await import("../next.config");
+    expect(await config.redirects!()).toContainEqual({ source: "/refer", destination: referralPaths.refer, permanent: true });
   });
 });
 

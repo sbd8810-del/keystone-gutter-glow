@@ -18,14 +18,20 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
-  // Vercel only. Once SITE_URL names the custom domain, the production *.vercel.app addresses send
-  // people and search engines there permanently. API routes are left alone so webhooks configured
-  // with the old address keep working. Previews (VERCEL_ENV=preview) are never redirected. Other
-  // hosts have no .vercel.app address; their own address is handled in the host's settings (README).
   async redirects() {
+    // Pages that moved. Old links, bookmarks and flyers keep working. On any host.
+    const moved = [
+      // Jimmy renamed the referral page (2026-11-19). Must match content/referral.ts `referralPaths.refer`.
+      { source: "/refer", destination: "/referrals", permanent: true },
+    ];
+    // Vercel only. Once SITE_URL names the custom domain, the production *.vercel.app addresses send
+    // people and search engines there permanently. API routes are left alone so webhooks configured
+    // with the old address keep working. Previews (VERCEL_ENV=preview) are never redirected. Other
+    // hosts have no .vercel.app address; their own address is handled in the host's settings (README).
     const site = process.env.SITE_URL?.replace(/\/$/, "");
-    if (!site || process.env.VERCEL_ENV !== "production") return [];
+    if (!site || process.env.VERCEL_ENV !== "production") return moved;
     return [
+      ...moved,
       {
         source: "/:path((?!api/).*)",
         has: [{ type: "host", value: "(?<sub>.+)\\.vercel\\.app" }],

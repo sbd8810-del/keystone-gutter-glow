@@ -1,5 +1,5 @@
 // The referral program (Sam, for Jimmy, 2026-11-12):
-//  - A customer refers someone on /refer by giving their own details and their friend's.
+//  - A customer refers someone on /referrals by giving their own details and their friend's.
 //  - Jimmy gets in touch with the friend and sends them /referred, where a cleaning is $30 off.
 //  - The customer's thank-you is their choice of $25 cash or $50 off the first year of a recurring
 //    plan (first year only, not renewals; Sam, 2026-11-14). If they pick the plan, Jimmy calls
@@ -9,7 +9,7 @@
 // The Terms of Service has the same rules in its "Referrals" section (content/legal.tsx).
 
 export const referralPaths = {
-  /** Where customers refer someone */
+  /** Where customers refer someone. The page is app/referrals; the old /refer redirects here (next.config.ts). */
   refer: "/referrals",
   /** The page Jimmy sends referred friends: booking with $30 off */
   friend: "/referred",
