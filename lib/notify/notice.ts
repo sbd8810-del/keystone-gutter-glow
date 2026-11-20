@@ -14,16 +14,23 @@ export interface Notice {
 }
 
 export type NoticeResult =
-  | { ok: true }
-  /** "activation": FormSubmit is waiting for Jimmy to click "Activate Form" in its first email. */
-  | { ok: false; reason: "activation" | "refused" | "network"; message?: string };
+  /**
+   * FormSubmit has it. `held`: the form isn't activated for this site's address yet (the first
+   * submission ever, or the first after moving to a new domain). FormSubmit keeps the submission,
+   * emails Jimmy an "Activate Form" link, and delivers everything it kept once he clicks it
+   * (formsubmit.co/help: "FormSubmit keeps your submissions until you confirm your form", for 30 days).
+   * So it isn't a failure, and sending again would only reach him twice.
+   */
+  | { ok: true; held?: true; message?: string }
+  | { ok: false; reason: "refused" | "network"; message?: string };
 
 export const FORMSUBMIT_AJAX = "https://formsubmit.co/ajax/";
 
 /**
- * Posts the notice to FormSubmit and reports whether FormSubmit confirmed it. Only a
- * `"success": "true"` answer counts. An unreachable server, an error status, an unreadable answer
- * and an inactive form are all failures, so the page never claims Jimmy has something he doesn't.
+ * Posts the notice to FormSubmit and reports whether FormSubmit has it. Only a `"success": "true"`
+ * answer, or FormSubmit's "needs Activation" answer (`held`), counts. An unreachable server, an
+ * error status, an unreadable answer and any other refusal are failures, so the page never claims
+ * Jimmy will get something FormSubmit doesn't have.
  */
 export async function sendNotice(notice: Notice, signal?: AbortSignal): Promise<NoticeResult> {
   // Never post customer details anywhere but FormSubmit, whatever the server sent.
@@ -51,9 +58,10 @@ export async function sendNotice(notice: Notice, signal?: AbortSignal): Promise<
   const data = (await res.json().catch(() => null)) as { success?: unknown; message?: unknown } | null;
   const message = typeof data?.message === "string" ? data.message : undefined;
   if (res.ok && (data?.success === "true" || data?.success === true)) return { ok: true };
-  if (message && /activat/i.test(message)) {
-    console.warn("[notify] FormSubmit hasn't been activated for this site yet:", message);
-    return { ok: false, reason: "activation", message };
+  // "This form needs Activation…". Not "…deactivated", which would mean it's switched off for good.
+  if (message && /activat/i.test(message) && !/deactivat/i.test(message)) {
+    console.warn("[notify] FormSubmit is holding this until the form is activated for this site:", message);
+    return { ok: true, held: true, message };
   }
   console.warn(`[notify] FormSubmit didn't accept the notice (${res.status})`, message ?? "");
   return { ok: false, reason: "refused", message };

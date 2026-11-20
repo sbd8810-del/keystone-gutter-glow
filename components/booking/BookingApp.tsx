@@ -19,7 +19,7 @@ import { sendNotice } from "@/lib/notify/notice";
 import { fetchDay, fetchRange, submitBooking, type Meta } from "./api";
 import styles from "./Booking.module.css";
 import { Calendar } from "./Calendar";
-import { CONFIRMED_PATH, saveConfirmation } from "./confirmation";
+import { CONFIRMED_PATH, deliveryAfter, saveConfirmation } from "./confirmation";
 import { DemoNote, type Delivery } from "./Done";
 
 type Step = 0 | 1 | 2 | 3;
@@ -317,7 +317,7 @@ export function BookingApp({ referral }: { referral?: ReferralLink }) {
       if (result.notice) {
         setSubmitStage("notifying");
         const sent = await sendNotice(result.notice);
-        delivery = sent.ok ? { status: "sent" } : { status: "failed", notice: result.notice };
+        delivery = deliveryAfter(sent, result.notice);
       }
       // Then on to the confirmation page, which Google Ads counts as the conversion. The button stays
       // busy until the page changes.

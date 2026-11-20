@@ -22,8 +22,9 @@ import { FORMSUBMIT_AJAX, type Notice } from "./notice";
 //                             store, whose bookings aren't real.
 //
 // Until Jimmy clicks "Activate Form" in FormSubmit's first email, every submission sends him
-// another activation email instead of the notice. So only switch this on once he expects that
-// email, and activate it straight away (README, "Notifications to Jimmy").
+// another activation email, and FormSubmit holds the notices until he clicks it. The same happens
+// once more after a move to a new domain. So only switch this on once he expects that email, and
+// activate it straight away (README, "Notifications to Jimmy").
 //
 // Everything goes to the address published on the site, content/site.ts `email`.
 

@@ -283,7 +283,7 @@ Every email comes from FormSubmit to jimmyesmond@keystonegutterglow.com. It's se
    2. Redeploy.
    3. Open `/notify-test` and press "Send a test message".
    4. Set the variable back to off and redeploy. The page is a 404 while it's off, so strangers can't use it to fill your inbox.
-4. **After moving to a new domain**, FormSubmit sees a new site and sends one more "Activate Form" email. Click it.
+4. **After moving to a new domain**, FormSubmit sees a new site and sends one more "Activate Form" email. Click it. FormSubmit holds anything sent before you click it and delivers it once you do, so the customer's page says they're booked rather than showing an error.
 
 **Switching emails off.** Remove `FORMSUBMIT_ENABLED` from the host's settings and redeploy. Bookings keep working; you just aren't told. FormSubmit never runs on preview copies (Vercel previews, or `SITE_ENV=preview` on another host) or the demo store, so test bookings never reach you.
 
@@ -495,10 +495,10 @@ GitHub emails about failed scheduled runs to whoever created the workflow (Sam),
 Right now every page tells Google not to list it (`noindex`), and keystonegutterglow.com still shows the old GitHub Pages site. To switch over:
 
 1. **Point the domain at Vercel.** In Vercel, open Settings, then Domains. Add `keystonegutterglow.com`, then add the DNS records Vercel shows at the domain registrar. Remove the old GitHub Pages records. Keep the Zoho email records. (On another host, add the domain in that host's settings and use the records it shows.)
-2. **Set `SITE_URL`.** Once Vercel says the domain is valid, set `SITE_URL=https://keystonegutterglow.com` on Production. From then on the `.vercel.app` address redirects to the domain. Email links (Check it's real, referral links) use the new address too; old links keep working through the redirect.
+2. **Set `SITE_URL`.** Once Vercel says the domain is valid, set `SITE_URL` on Production to the address the site ends up on. If Vercel sends `keystonegutterglow.com` to `www.keystonegutterglow.com`, that's `https://www.keystonegutterglow.com`; otherwise `https://keystonegutterglow.com`. From then on the `.vercel.app` address redirects to the domain. Email links (Check it's real, referral links) use the new address too; old links keep working through the redirect.
 3. **Let Google list the site.** Set `ALLOW_INDEXING=true` on Production, then redeploy.
-4. **Reactivate FormSubmit.** It sends one more "Activate Form" email for the new address. Click it.
-5. **Google Search Console** (your Google account): add the domain, verify it with the DNS record it gives, and submit `https://keystonegutterglow.com/sitemap.xml`.
+4. **Reactivate FormSubmit.** It sends one more "Activate Form" email for the new address. Click it. Bookings made before you click it arrive once you do.
+5. **Google Search Console** (your Google account): add the domain, verify it with the DNS record it gives, and submit the sitemap: your `SITE_URL` followed by `/sitemap.xml`.
 6. **Google Business Profile.** Set it up as a service-area business, so your address stays hidden. Add Bucks, Montgomery and Philadelphia Counties, and not New Jersey. Ask real customers for reviews.
 
 ---

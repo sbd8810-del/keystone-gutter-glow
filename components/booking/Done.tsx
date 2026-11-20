@@ -25,10 +25,12 @@ const slotLabel = (id: string | null) => bookingRules.slots.find((s) => s.id ===
  * so a failed send never loses it: the customer can send again, or call with the reference.
  *   off       notifications aren't on for this deployment, so there's nothing to send
  *   sent      FormSubmit confirmed it
- *   failed    FormSubmit didn't confirm it (down, refused, not activated, offline)
+ *   held      FormSubmit kept it until Jimmy activates the form for this address, then delivers it
+ *             (lib/notify/notice.ts). Shown as booked, without "Jimmy has your booking details".
+ *   failed    FormSubmit didn't take it (down, refused, offline)
  *   retrying  sending again after a failure
  */
-export type Delivery = { status: "off" } | { status: "sent" } | { status: "failed" | "retrying"; notice: Notice };
+export type Delivery = { status: "off" } | { status: "sent" } | { status: "held" } | { status: "failed" | "retrying"; notice: Notice };
 
 export function DemoNote({ done }: { done?: boolean }) {
   return (

@@ -10,6 +10,7 @@ import { today } from "@/lib/booking/service";
 import { resetBookingStore } from "@/lib/booking/store";
 import { formSubmitEnabled } from "@/lib/notify/formsubmit";
 import { sendNotice, type Notice } from "@/lib/notify/notice";
+import { deliveryAfter } from "@/components/booking/confirmation";
 import { resetRateLimits } from "@/lib/rateLimit";
 import { firstBookable, freshDatabase, postgrestShim } from "./helpers";
 
@@ -18,7 +19,7 @@ import { firstBookable, freshDatabase, postgrestShim } from "./helpers";
 // - the notice carries everything Jimmy needs, addressed to the email published on the site,
 // - notices are off unless FORMSUBMIT_ENABLED=true, and never on previews or the demo store,
 // - the server itself never contacts FormSubmit, and the booking database still enforces the daily cap,
-// - the browser only reports success when FormSubmit confirms it.
+// - the browser only reports success when FormSubmit confirms it, or holds it until Jimmy activates the form.
 // No test reaches the real FormSubmit: every fetch is stubbed.
 
 const JIMMY_ENDPOINT = "https://formsubmit.co/ajax/jimmyesmond@keystonegutterglow.com";
@@ -319,13 +320,24 @@ describe("sending a notice from the browser", () => {
     expect(body.get("email")).toBe("pat@example.com");
   });
 
-  it("recognizes a form that still needs activating, without calling it a success", async () => {
+  it("counts a form that still needs activating as held, not failed: FormSubmit delivers it once Jimmy activates", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubGlobal(
       "fetch",
       answer({ success: "false", message: "This form needs Activation. We've sent you an email containing an 'Activate Form' link." }),
     );
-    expect(await sendNotice(notice)).toMatchObject({ ok: false, reason: "activation" });
+    const held = await sendNotice(notice);
+    expect(held).toMatchObject({ ok: true, held: true });
+    // The confirmation page shows the booking as made, and doesn't offer to send it a second time.
+    expect(deliveryAfter(held, notice)).toEqual({ status: "held" });
+    expect(deliveryAfter({ ok: true }, notice)).toEqual({ status: "sent" });
+    expect(deliveryAfter({ ok: false, reason: "network" }, notice)).toEqual({ status: "failed", notice });
+  });
+
+  it("still fails a form FormSubmit has deactivated", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("fetch", answer({ success: "false", message: "This form has been deactivated." }));
+    expect(await sendNotice(notice)).toMatchObject({ ok: false, reason: "refused" });
   });
 
   it("treats anything but a confirmed success as a failure", async () => {

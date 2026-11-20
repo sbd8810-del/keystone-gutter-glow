@@ -6,7 +6,7 @@ import { site } from "@/content/site";
 import { reportBookingConversion } from "@/lib/ads";
 import { sendNotice } from "@/lib/notify/notice";
 import styles from "./Booking.module.css";
-import { loadConfirmation, saveConfirmation, type StoredConfirmation } from "./confirmation";
+import { deliveryAfter, loadConfirmation, saveConfirmation, type StoredConfirmation } from "./confirmation";
 import { Done } from "./Done";
 
 // /booking-confirmed: where the booking form sends people once their booking is saved. It shows the
@@ -37,7 +37,7 @@ export function BookingConfirmed({ planRequests, measure }: { planRequests: bool
     const { notice } = saved.delivery;
     setSaved({ ...saved, delivery: { status: "retrying", notice } });
     const sent = await sendNotice(notice);
-    const next: StoredConfirmation = { ...saved, delivery: sent.ok ? { status: "sent" } : { status: "failed", notice } };
+    const next: StoredConfirmation = { ...saved, delivery: deliveryAfter(sent, notice) };
     saveConfirmation(next);
     setSaved(next);
     requestAnimationFrame(() => headingRef.current?.focus());

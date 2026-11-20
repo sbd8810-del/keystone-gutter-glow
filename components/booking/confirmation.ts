@@ -1,5 +1,12 @@
+import type { Notice, NoticeResult } from "@/lib/notify/notice";
 import type { Confirmation } from "./api";
 import type { Delivery } from "./Done";
+
+/** What the confirmation shows once FormSubmit has answered. Only a real failure offers to send again. */
+export function deliveryAfter(result: NoticeResult, notice: Notice): Delivery {
+  if (!result.ok) return { status: "failed", notice };
+  return result.held ? { status: "held" } : { status: "sent" };
+}
 
 // Hands a finished booking from the booking form to /booking-confirmed. Kept in memory for the
 // page change, and in sessionStorage so a reload of the confirmation still shows it. Both stay in
