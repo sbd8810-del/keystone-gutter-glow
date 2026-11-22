@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible, Zilla_Slab } from "next/font/google";
 import { BotanicalDefs } from "@/components/botanical/Botanical";
 import { site } from "@/content/site";
-import { GOOGLE_TAG_ID, GOOGLE_TAG_INLINE, googleTagOn } from "@/lib/ads";
+import { GOOGLE_TAG_ID, GOOGLE_TAG_ID_2, GOOGLE_TAG_INLINE, googleTagOn } from "@/lib/ads";
 import { allowIndexing, googleSiteVerification, publicUrl } from "@/lib/env";
 import "./globals.css";
 
@@ -48,10 +48,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // data-scroll-behavior tells Next to turn off the CSS smooth scrolling during page changes.
     <html lang="en-US" className={`${display.variable} ${body.variable}`} data-scroll-behavior="smooth">
       <head>
-        {/* Google tag for Jimmy's Google Ads (lib/ads.ts), first in <head> as Google asks. Production only. */}
+        {/* Google tags for Jimmy's two Google Ads accounts (lib/ads.ts), first in <head> as Google asks. Production only. */}
         {googleTagOn() && (
           <>
             <script async src={`https://www.googletagmanager.com/gtm.js?id=${GOOGLE_TAG_ID}`} />
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID_2}`} />
             <script dangerouslySetInnerHTML={{ __html: GOOGLE_TAG_INLINE }} />
           </>
         )}

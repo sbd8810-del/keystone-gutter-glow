@@ -1,18 +1,27 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BOOKING_CONVERSION, GOOGLE_TAG_ID, GOOGLE_TAG_INLINE, googleTagOn, reportBookingConversion } from "@/lib/ads";
+import { BOOKING_CONVERSIONS, GOOGLE_TAG_ID, GOOGLE_TAG_ID_2, GOOGLE_TAG_INLINE, googleTagOn, reportBookingConversion } from "@/lib/ads";
 
-// Google Ads: the tag and the booking conversion, with the IDs from Jimmy's Google Ads setup.
+// Google Ads: the tags and the booking conversions, with the IDs from Jimmy's two Google Ads accounts.
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("Google tag", () => {
-  it("uses Jimmy's container and Google's own setup script", () => {
+  it("uses Jimmy's two tags and Google's own setup script", () => {
     expect(GOOGLE_TAG_ID).toBe("GTM-MVK64PHQ");
+    expect(GOOGLE_TAG_ID_2).toBe("GTM-N8CX448C");
     expect(GOOGLE_TAG_INLINE).toContain("window.dataLayer = window.dataLayer || [];");
     expect(GOOGLE_TAG_INLINE).toContain("function gtag(){dataLayer.push(arguments);}");
     expect(GOOGLE_TAG_INLINE).toContain("gtag('js', new Date());");
+    expect(GOOGLE_TAG_INLINE).toContain("gtag('config', 'GTM-N8CX448C');");
+  });
+
+  it("puts both tags in every page's head", () => {
+    const layout = readFileSync("app/layout.tsx", "utf8");
+    expect(layout).toContain("https://www.googletagmanager.com/gtm.js?id=${GOOGLE_TAG_ID}");
+    expect(layout).toContain("https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID_2}");
   });
 
   it("only loads on the production deployment, so tests and previews never count", () => {
@@ -42,24 +51,22 @@ describe("booking conversion", () => {
     return gtag;
   }
 
-  it("sends Google's Purchase event with the booking number as the transaction ID", () => {
+  it("sends each account's Purchase event with the booking number as the transaction ID", () => {
     const gtag = browser();
     expect(reportBookingConversion("KGG-ABC23")).toBe(true);
-    expect(gtag).toHaveBeenCalledWith("event", "conversion", {
-      send_to: "AW-18566097431/YzNNCIGmpLUdEJfUgJVF",
-      value: 1.0,
-      currency: "USD",
-      transaction_id: "KGG-ABC23",
-    });
-    expect(BOOKING_CONVERSION.send_to).toBe("AW-18566097431/YzNNCIGmpLUdEJfUgJVF");
+    expect(gtag.mock.calls).toEqual([
+      ["event", "conversion", { send_to: "AW-18566097431/YzNNCIGmpLUdEJfUgJVF", value: 1.0, currency: "USD", transaction_id: "KGG-ABC23" }],
+      ["event", "conversion", { send_to: "AW-18587142549/dryfCLjY_rwdEJWThZ9F", transaction_id: "KGG-ABC23" }],
+    ]);
+    expect(BOOKING_CONVERSIONS.map((c) => c.send_to)).toEqual(["AW-18566097431/YzNNCIGmpLUdEJfUgJVF", "AW-18587142549/dryfCLjY_rwdEJWThZ9F"]);
   });
 
-  it("sends it once per booking, even if the page is reloaded", () => {
+  it("sends them once per booking, even if the page is reloaded", () => {
     const gtag = browser();
     reportBookingConversion("KGG-ABC23");
     expect(reportBookingConversion("KGG-ABC23")).toBe(false);
     reportBookingConversion("KGG-XYZ45");
-    expect(gtag).toHaveBeenCalledTimes(2);
+    expect(gtag).toHaveBeenCalledTimes(2 * BOOKING_CONVERSIONS.length);
   });
 
   it("does nothing where the tag isn't loaded", () => {

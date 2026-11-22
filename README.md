@@ -411,8 +411,16 @@ Everything a customer sees comes from the `content/` folder. Change it there and
 
 ## Google Ads
 
-- **The tag.** Google tag container `GTM-MVK64PHQ` loads on every page of the live site, and only there: never on previews or local runs (`lib/ads.ts`, `app/layout.tsx`). It fires your Google Ads tag (account `18566097431`). That was confirmed working on 2026-11-14. Vercel tells the site which copy is live on its own. On any other host, the live site needs `SITE_ENV=production`, or the tag and conversions stay off.
-- **Conversions.** Each booking counts once as a **Purchase** conversion (`AW-18566097431/YzNNCIGmpLUdEJfUgJVF`). It's worth $1, with the booking reference as the transaction ID. It fires on `/booking-confirmed`, once per booking, and never when that page is opened without a booking.
+- **Two accounts.** The site reports to two Google Ads accounts. Each has its own tag and its own Purchase conversion:
+
+  | Account | Google tag | Purchase conversion | Added |
+  |---|---|---|---|
+  | `18566097431` | container `GTM-MVK64PHQ` | `AW-18566097431/YzNNCIGmpLUdEJfUgJVF`, worth $1 | 2026-11-11, confirmed working 2026-11-14 |
+  | `18587142549` | `GTM-N8CX448C` | `AW-18587142549/dryfCLjY_rwdEJWThZ9F` ("Purchase (1)"), no value set | 2026-11-21 |
+
+  To stop reporting to one, remove its two IDs from `lib/ads.ts` and its `<script>` line from `app/layout.tsx`.
+- **The tags.** Both load on every page of the live site, and only there: never on previews or local runs (`lib/ads.ts`, `app/layout.tsx`). Vercel tells the site which copy is live on its own. On any other host, the live site needs `SITE_ENV=production`, or the tags and conversions stay off.
+- **Conversions.** Each booking counts once in each account, with the booking reference as the transaction ID. They fire on `/booking-confirmed`, once per booking, and never when that page is opened without a booking.
 - **Checking it.** In Google Ads, under Goals then Conversions, the first real booking should appear within a few hours. Don't make a test booking on the live site: it writes to the real database and emails you.
 
 ---
