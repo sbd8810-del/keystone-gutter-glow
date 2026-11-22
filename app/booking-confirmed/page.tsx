@@ -8,6 +8,7 @@ import { googleTagOn } from "@/lib/ads";
 import { planRequestsOpen } from "@/lib/plan/open";
 import styles from "./booking-confirmed.module.css";
 
+<!-- Event snippet for Purchase (1) conversion page --> <script> gtag('event', 'conversion', { 'send_to': 'AW-18587142549/dryfCLjY_rwdEJWThZ9F', 'transaction_id': '' // 'new_customer': true /* calculate dynamically, populate with true/false */, }); </script>
 // Where the booking form sends people after a successful booking. Google Ads counts arriving here
 // with a booking as a "Purchase" conversion (lib/ads.ts). Not a place to book from, so it's kept
 // out of search results and the sitemap.
