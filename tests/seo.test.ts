@@ -1,6 +1,8 @@
+import { existsSync, readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { indexingAllowed } from "@/lib/deploy";
 
-// robots.txt, the sitemap and the JSON-LD all read the deployment's environment when they load,
+// Indexing, the sitemap and the JSON-LD all read the deployment's environment when they load,
 // so each test sets the environment and then imports a fresh copy.
 
 const ENV_KEYS = ["SITE_URL", "VERCEL_PROJECT_PRODUCTION_URL", "ALLOW_INDEXING", "FIREWOOD_PREVIEW", "SITE_MODE", "VERCEL_ENV", "SITE_ENV"];
@@ -13,7 +15,8 @@ async function load(env: Record<string, string | undefined>, firewood: "on" | "o
   // Firewood is switched off on the site for now. Most of these test it switched on.
   (await import("@/content/season")).firewoodSwitch.off = firewood === "off";
   return {
-    robots: (await import("@/app/robots")).default,
+    env: await import("@/lib/env"),
+    headers: () => import("@/next.config").then((m) => m.default.headers!()),
     sitemap: (await import("@/app/sitemap")).default,
     schema: await import("@/lib/schema"),
   };
@@ -26,17 +29,46 @@ afterEach(() => {
   }
 });
 
-describe("robots.txt", () => {
-  it("blocks everything while indexing is off", async () => {
-    const { robots } = await load({ VERCEL_PROJECT_PRODUCTION_URL: "keystone-gutter-glow.vercel.app" });
-    expect(robots()).toEqual({ rules: [{ userAgent: "*", disallow: "/" }] });
+describe("Google indexing", () => {
+  it("lists the live site, on Vercel or any other host, and never a preview, test copy or local run", () => {
+    expect(indexingAllowed({ VERCEL_ENV: "production" })).toBe(true);
+    expect(indexingAllowed({ SITE_ENV: "production" })).toBe(true);
+    expect(indexingAllowed({ VERCEL_ENV: "preview" })).toBe(false);
+    expect(indexingAllowed({ SITE_ENV: "preview", VERCEL_ENV: "production" })).toBe(false);
+    expect(indexingAllowed({ NODE_ENV: "production" })).toBe(false);
+    expect(indexingAllowed({})).toBe(false);
   });
 
-  it("opens the site, keeps APIs and the order page out, and points at the sitemap", async () => {
-    const { robots } = await load({ ALLOW_INDEXING: "true", SITE_URL: "https://example.test" });
-    const r = robots();
-    expect(r.rules).toEqual([{ userAgent: "*", allow: "/", disallow: ["/api/", "/firewood/order", "/booking-confirmed", "/notify-test", "/check/"] }]);
-    expect(r.sitemap).toBe("https://example.test/sitemap.xml");
+  it("can still be switched either way with ALLOW_INDEXING", () => {
+    expect(indexingAllowed({ VERCEL_ENV: "production", ALLOW_INDEXING: "false" })).toBe(false);
+    expect(indexingAllowed({ VERCEL_ENV: "preview", ALLOW_INDEXING: "true" })).toBe(true);
+  });
+
+  it("has no robots.txt, so Google may crawl every page (Sam, 2026-11-26)", () => {
+    expect(existsSync("app/robots.ts")).toBe(false);
+    expect(existsSync("public/robots.txt")).toBe(false);
+  });
+
+  it("tells Google to list the live site's pages, and sends no noindex header there except on the APIs", async () => {
+    const { env, headers } = await load({ VERCEL_ENV: "production" });
+    expect(env.allowIndexing).toBe(true);
+    const rules = await headers();
+    const robotsHeader = (source: string) => rules.find((r) => r.source === source)?.headers.find((h) => h.key === "X-Robots-Tag")?.value;
+    expect(robotsHeader("/:path*")).toBeUndefined();
+    expect(robotsHeader("/api/:path*")).toBe("noindex, nofollow");
+  });
+
+  it("keeps a preview out of Google entirely", async () => {
+    const { env, headers } = await load({ VERCEL_ENV: "preview" });
+    expect(env.allowIndexing).toBe(false);
+    const all = (await headers()).find((r) => r.source === "/:path*")!;
+    expect(all.headers).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" });
+  });
+
+  it("keeps private pages out of search results on the page itself, since there's no robots.txt to do it", () => {
+    for (const page of ["booking-confirmed", "check/[kind]/[id]", "firewood/order", "notify-test", "referred", "referred/[code]"]) {
+      expect(readFileSync(`app/${page}/page.tsx`, "utf8"), page).toContain("robots: { index: false, follow: false }");
+    }
   });
 });
 

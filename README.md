@@ -19,7 +19,7 @@ What the site says to customers (prices, copy, the legal pages) is on the site i
 11. [Google Ads](#google-ads)
 12. [Settings (environment variables)](#settings-environment-variables)
 13. [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel)
-14. [Moving to keystonegutterglow.com and showing up on Google](#moving-to-keystonegutterglowcom-and-showing-up-on-google)
+14. [Showing up on Google](#showing-up-on-google)
 15. [Firewood (switched off)](#firewood-switched-off)
 16. [Working on the code, with or without Claude](#working-on-the-code-with-or-without-claude)
 17. [Still to confirm](#still-to-confirm)
@@ -51,7 +51,7 @@ Some of these services require account holders to be 18 or older. If one does, a
 
      Claude can walk you through it. Ask: "Help me set up this website on my own Vercel and Supabase accounts. The README explains the pieces."
    - **Or skip Vercel entirely.** The site runs on any host that runs Node.js. See [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel).
-3. **Your domain.** To move the site onto keystonegutterglow.com, and turn on Google search listing once it's there, follow [Moving to keystonegutterglow.com](#moving-to-keystonegutterglowcom-and-showing-up-on-google).
+3. **Google.** The site is on keystonegutterglow.com and open to Google. What's left (Search Console, your Business Profile) is in [Showing up on Google](#showing-up-on-google).
 
 **Approve the legal pages and business statements.** Section 6 of the agreement makes this your call.
 - These pages were drafted from your rules but **haven't been reviewed by a lawyer**: `/terms` (including the referral rules and liability limits), `/privacy` and `/recurring-plan-terms`. Read them, and have a Pennsylvania attorney look them over before you rely on them.
@@ -86,7 +86,7 @@ Some of these services require account holders to be 18 or older. If one does, a
 | **Zoho** | Your mailbox for jimmyesmond@keystonegutterglow.com | zoho.com |
 | **Google Ads** | Ads, plus counting each booking as a conversion | ads.google.com |
 
-The live address is **https://keystone-gutter-glow.vercel.app** for now. keystonegutterglow.com still shows the old site until the domain is moved (see [Moving to keystonegutterglow.com](#moving-to-keystonegutterglowcom-and-showing-up-on-google)).
+The live address is **https://www.keystonegutterglow.com**. `keystonegutterglow.com` sends people there, and the old `keystone-gutter-glow.vercel.app` address still works too.
 
 Nothing is ever charged online. You invoice every customer yourself.
 
@@ -438,8 +438,8 @@ In Vercel: the project, then **Settings**, then **Environment Variables**. After
 | `NOTICE_SECRET` | Optional secret for the Check it's real links | not set (uses the Supabase key) |
 | `CRON_SECRET` | Optional. Only callers that send it can run the keep-alive: Vercel's scheduler, or the GitHub workflow off Vercel. | not set |
 | `SITE_URL` | The site's real address, once the domain moves. Required on any host other than Vercel. | not set |
-| `SITE_ENV` | Other hosts only: `production` on the live site (turns on the Google tag), `preview` on a test copy. Vercel works this out on its own. | not needed on Vercel |
-| `ALLOW_INDEXING` | `true` = Google may list the site | **not set: the site is hidden from Google** |
+| `SITE_ENV` | Other hosts only: `production` on the live site (turns on the Google tag and lets Google list the site), `preview` on a test copy. Vercel works this out on its own. | not needed on Vercel |
+| `ALLOW_INDEXING` | Not needed: Google may list the live site, never a preview. `false` hides the live site from Google too. | not set: **Google may list the site** |
 | `GOOGLE_SITE_VERIFICATION` | Search Console's HTML-tag token | not set |
 | `FIREWOOD_PREVIEW`, `SITE_MODE`, `STRIPE_*`, `RESEND_API_KEY` | Firewood only (switched off) | |
 | `BOOKING_DEMO_MODE`, `BOOKING_DEMO_SEED` | Demo store for preview copies. Never on the real site. | |
@@ -470,14 +470,13 @@ Claude can do the move with you. Ask: "Help me move this website from Vercel to 
 
 | Variable | Value |
 |---|---|
-| `SITE_ENV` | `production`. Vercel says this on its own; other hosts need it, or the Google tag and booking conversions stay off. |
+| `SITE_ENV` | `production`. Vercel says this on its own; other hosts need it, or the Google tag and booking conversions stay off and Google is told not to list the site. |
 | `SITE_URL` | Where the site lives, e.g. `https://keystonegutterglow.com`. Without it, the links in your emails point at keystonegutterglow.com. |
 | `BOOKING_STORE` | `supabase` |
 | `SUPABASE_URL` | The project URL from step 1 |
 | `SUPABASE_SERVICE_ROLE_KEY` | The secret key from step 1. The name says "service role", but the site accepts either kind of key. |
 | `FORMSUBMIT_ENABLED` | `true` |
 | `CRON_SECRET` | A long random password, for the keep-alive below |
-| `ALLOW_INDEXING` | `true`, once the site is on keystonegutterglow.com |
 
 Then deploy, open the site, and check that the booking calendar shows open days. If FormSubmit sends an "Activate Form" email, click it.
 
@@ -498,16 +497,17 @@ GitHub emails about failed scheduled runs to whoever created the workflow (Sam),
 
 ---
 
-## Moving to keystonegutterglow.com and showing up on Google
+## Showing up on Google
 
-Right now every page tells Google not to list it (`noindex`), and keystonegutterglow.com still shows the old GitHub Pages site. To switch over:
+The live site is open to Google. Every page says it may be listed, and there's **no robots.txt on purpose**, so Google can crawl every page. Don't add one. Previews, test copies and local runs still tell Google to stay away, so search results only ever point at the real site. The pages that shouldn't show up in searches (booking confirmation, Check it's real, personal referral links, the test page) say so on the page itself, and the booking APIs send a "don't list" header.
 
-1. **Point the domain at Vercel.** In Vercel, open Settings, then Domains. Add `keystonegutterglow.com`, then add the DNS records Vercel shows at the domain registrar. Remove the old GitHub Pages records. Keep the Zoho email records. (On another host, add the domain in that host's settings and use the records it shows.)
-2. **Set `SITE_URL`.** Once Vercel says the domain is valid, set `SITE_URL` on Production to the address the site ends up on. If Vercel sends `keystonegutterglow.com` to `www.keystonegutterglow.com`, that's `https://www.keystonegutterglow.com`; otherwise `https://keystonegutterglow.com`. From then on the `.vercel.app` address redirects to the domain. Email links (Check it's real, referral links) use the new address too; old links keep working through the redirect.
-3. **Let Google list the site.** Set `ALLOW_INDEXING=true` on Production, then redeploy.
-4. **Reactivate FormSubmit.** It sends one more "Activate Form" email for the new address. Click it. Bookings made before you click it arrive once you do.
-5. **Google Search Console** (your Google account): add the domain, verify it with the DNS record it gives, and submit the sitemap: your `SITE_URL` followed by `/sitemap.xml`.
-6. **Google Business Profile.** Set it up as a service-area business, so your address stays hidden. Add Bucks, Montgomery and Philadelphia Counties, and not New Jersey. Ask real customers for reviews.
+To hide the live site from Google again, set `ALLOW_INDEXING=false` on Production and redeploy.
+
+1. **Google Search Console** (your Google account): add `keystonegutterglow.com` as a domain property and verify it with the DNS record it gives. Under **Sitemaps**, submit `https://www.keystonegutterglow.com/sitemap.xml`. Without a robots.txt, nothing else tells Google where it is. Then use **URL Inspection** on the home page and click **Request indexing**. Getting listed takes a few days to a few weeks.
+2. **Google Business Profile.** Set it up as a service-area business, so your address stays hidden. Add Bucks, Montgomery and Philadelphia Counties, and not New Jersey. Ask real customers for reviews.
+3. **Optional, on Vercel:** set `SITE_URL` to `https://www.keystonegutterglow.com` on Production and redeploy. Then the old `.vercel.app` address redirects to the domain as well. Without it, every page already tells Google that the www address is the real one.
+
+**If the domain ever moves** to another host: add it in that host's settings, use the DNS records it shows (keep the Zoho email records), set `SITE_URL`, and click FormSubmit's "Activate Form" email for the new address. Bookings made before you click it arrive once you do.
 
 ---
 
@@ -544,7 +544,7 @@ The local copy never touches the real database or your inbox. It uses an in-memo
 **Seeing whether a change worked.** Every push to GitHub also runs **Check the site** (`.github/workflows/check.yml`). It runs the tests, then builds the site, just as the host does. It takes about two minutes and needs no Vercel account.
 - **Green tick** next to your commit on GitHub: it built.
 - **Red X:** it didn't, and it won't go live. Click the X, then **Details**, and open the step that failed to see the error. GitHub also emails you. Fix it, or undo the commit (on GitHub, open the commit and use **Revert**). The live site keeps the last working version meanwhile.
-- **Don't paste Google's (or anyone's) HTML snippets into the code.** Instructions like "paste this between the `<head>` tags" are for plain HTML sites. This site's files are TypeScript, so a pasted snippet breaks the build. The Google tags and conversions live in `lib/ads.ts`, and search-engine indexing is a setting (`ALLOW_INDEXING`), not code.
+- **Don't paste Google's (or anyone's) HTML snippets into the code.** Instructions like "paste this between the `<head>` tags" are for plain HTML sites. This site's files are TypeScript, so a pasted snippet breaks the build. The Google tags and conversions live in `lib/ads.ts`. Google indexing is already on for the live site, with no robots.txt (see [Showing up on Google](#showing-up-on-google)).
 
 **Running the real build yourself** (any computer or server): `npm ci`, `npm run build`, then `npm start`, with the settings from [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel).
 

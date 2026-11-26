@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { indexingAllowed } from "./lib/deploy";
 
 // `frame-ancestors` stops the site being framed for clickjacking. Scripts aren't restricted here
 // because Next's inline scripts would need a nonce on every page, which rules out static pages.
@@ -41,15 +42,16 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    const noindex = { key: "X-Robots-Tag", value: "noindex, nofollow" };
     return [
       {
         source: "/:path*",
-        headers: [
-          ...securityHeaders,
-          // Covers APIs and any file robots.txt alone wouldn't. Comes off with ALLOW_INDEXING=true.
-          ...(process.env.ALLOW_INDEXING === "true" ? [] : [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]),
-        ],
+        // Previews, test copies and local runs stay out of Google entirely, files included.
+        // The live site doesn't send it (lib/deploy.ts, `indexingAllowed`).
+        headers: [...securityHeaders, ...(indexingAllowed() ? [] : [noindex])],
       },
+      // The booking APIs answer with data, not pages, so they're never listed, even on the live site.
+      { source: "/api/:path*", headers: [noindex] },
     ];
   },
 };
