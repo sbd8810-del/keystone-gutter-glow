@@ -1,0 +1,40 @@
+# Checks every change pushed to GitHub: runs the automated tests, then builds the site the way the
+# host does. It needs no settings, passwords or host account, and never touches the live site, the
+# database or anyone's inbox.
+#
+# If something's broken, the change gets a red X on GitHub. Click it, then "Details", to see the
+# error. GitHub also emails whoever pushed the change. A failed build never goes live: the host keeps
+# the last working version up (README, "Working on the code").
+
+name: Check the site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: # the "Run workflow" button
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Run the tests
+        run: npm test
+      - name: Build the site
+        run: npm run build

@@ -541,6 +541,11 @@ The local copy never touches the real database or your inbox. It uses an in-memo
 
 **Putting a change live:** commit, then push to `main`. Vercel builds it and it's live in about a minute. If the build fails, the old version stays up. Other hosts connected to GitHub work the same way.
 
+**Seeing whether a change worked.** Every push to GitHub also runs **Check the site** (`.github/workflows/check.yml`). It runs the tests, then builds the site, just as the host does. It takes about two minutes and needs no Vercel account.
+- **Green tick** next to your commit on GitHub: it built.
+- **Red X:** it didn't, and it won't go live. Click the X, then **Details**, and open the step that failed to see the error. GitHub also emails you. Fix it, or undo the commit (on GitHub, open the commit and use **Revert**). The live site keeps the last working version meanwhile.
+- **Don't paste Google's (or anyone's) HTML snippets into the code.** Instructions like "paste this between the `<head>` tags" are for plain HTML sites. This site's files are TypeScript, so a pasted snippet breaks the build. The Google tags and conversions live in `lib/ads.ts`, and search-engine indexing is a setting (`ALLOW_INDEXING`), not code.
+
 **Running the real build yourself** (any computer or server): `npm ci`, `npm run build`, then `npm start`, with the settings from [Hosting somewhere other than Vercel](#hosting-somewhere-other-than-vercel).
 
 **Where things are**
@@ -554,7 +559,7 @@ lib/notify/   the emails to you (formsubmit.ts) and the Check it's real links (c
 lib/plan/     adding a plan to an existing booking
 lib/referral/ referral codes and the referral form's checks
 db/migrations SQL for the database's structure
-.github/      the daily keep-alive workflow for hosts other than Vercel
+.github/      the check on every push (check.yml), and the daily keep-alive for hosts other than Vercel
 tests/        the automated checks
 DESIGN.md     why the site looks the way it does
 ```

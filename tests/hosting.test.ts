@@ -96,3 +96,16 @@ describe("what a host needs to know", () => {
     expect(pkg.scripts.start).toBe("next start");
   });
 });
+
+describe("the check on every push", () => {
+  const workflow = readFileSync(".github/workflows/check.yml", "utf8");
+
+  it("runs the tests and the real build for every push to main, with no secrets", () => {
+    expect(workflow).toMatch(/push:\s*\n\s*branches: \[main\]/);
+    expect(workflow).toContain("run: npm ci");
+    expect(workflow).toContain("run: npm test");
+    expect(workflow).toContain("run: npm run build");
+    expect(workflow).not.toContain("secrets.");
+    expect(workflow).toMatch(/permissions:\s*\n\s*contents: read/);
+  });
+});
